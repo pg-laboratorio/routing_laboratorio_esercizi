@@ -156,6 +156,8 @@ Un host aziendale della rete Amministrazione deve inviare un file a un server po
 **Topologia Logica:**
 `[PC]` ➔ `(Interfaccia LAN)` `[Router R1]` `(Interfaccia WAN)` ➔ `[Server]`
 
+![schema_rete](/immagini/schema_5.png)
+
 **Dati Tecnici Completi:**
 
 | Dispositivo / Interfaccia | Indirizzo IP | Indirizzo MAC |
