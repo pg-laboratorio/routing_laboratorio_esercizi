@@ -5,6 +5,7 @@ Questo modulo è focalizzato sui concetti fondamentali del routing, l'analisi de
 ## Materiale
 
 * [routing_esercizi_svolti.md](/routing_esercizi_svolti.md) — Documento completo con le spiegazioni teoriche, l'analisi logica delle tabelle di routing e gli esercizi svolti passo-passo sui cambiamenti degli header (Hop-by-Hop).
+* * [routing_esercizi_svolti.md](/routing_esercizi_casi_reali.md) — Documento che contiene esercizi applicati a casi reali, ideali per mettersi alla prova con scenari pratici.
 
 ---
 
