@@ -15,9 +15,13 @@ La sede centrale di un'azienda logistica deve instradare il traffico verso una f
 | Rete di Destinazione | Next-Hop / Interfaccia |
 | :--- | :--- |
 | `10.0.0.0/8` | Interfaccia `Fa0/0` |
+| `192.168.1.0/24` | Interfaccia `Fa0/1` (connessa: link verso i router della filiale) |
+| `203.0.113.0/24` | Interfaccia `Fa0/2` (connessa: link verso il provider) |
 | `10.20.0.0/16` | Gateway `192.168.1.2` |
 | `10.20.5.0/24` | Gateway `192.168.1.1` |
 | `0.0.0.0/0` | Gateway `203.0.113.1` (Internet) |
+
+> **Perché ci sono le reti connesse?** Un router può usare un next-hop solo se sa come raggiungerlo. I gateway `192.168.1.1`, `192.168.1.2` e `203.0.113.1` appartengono a reti direttamente connesse alle sue interfacce: senza quelle righe le rotte statiche non sarebbero utilizzabili.
 
 #### Domande
 Determinare quale specifica rotta verrà utilizzata dal router R1 e quale sarà l'azione di inoltro (Next-Hop o Interfaccia) per i pacchetti IP diretti verso i seguenti indirizzi di destinazione:
@@ -47,7 +51,7 @@ La scelta della rotta corretta si basa rigorosamente sulla regola del **Longest 
 **Scenario:**
 Un'azienda fintech gestisce un'infrastruttura ibrida: una parte dei servizi risiede in un Data Center locale (on-premises) e una parte è ospitata sul Cloud pubblico. Le reti sono interconnesse tramite collegamenti dedicati ad alta velocità. Il router aziendale deve gestire le rotte verso i server fisici e le istanze cloud.
 
-**Tabella di Routing del Router di Frontiera:**
+**Tabella di Routing del Router di Frontiera** *(estratto: sono mostrate solo le rotte utili all'esercizio, non le reti connesse verso i next-hop)*:
 
 | Rete di Destinazione | Next-Hop |
 | :--- | :--- |
@@ -141,7 +145,7 @@ L'host esegue un'operazione di AND logico bit a bit tra il proprio IP e la Subne
 
 1.  **192.168.10.50:** **Direttamente all'host finale.** L'indirizzo appartiene alla stessa subnet locale (`192.168.10.0/24`). Il PC utilizzerà il protocollo ARP per scoprire l'indirizzo MAC dell'host destinatario e invierà un frame Layer 2 diretto.
 2.  **192.168.10.200:** **Direttamente all'host finale.** Come sopra, appartiene alla stessa subnet. Il pacchetto non attraversa il router.
-3.  **192.168.20.5:** **Al Default Gateway.** Pur essendo un IP privato, appartiene a una subnet differente (`192.168.20.0/24`). Il PC invia il pacchetto inserendo l'IP di destinazione finale (`172.16.20.5`) nell'header di Layer 3, ma incapsula il frame inserendo il **MAC address del Gateway** (`192.168.10.1`) come destinazione di Layer 2.
+3.  **192.168.20.5:** **Al Default Gateway.** Pur essendo un IP privato, appartiene a una subnet differente (`192.168.20.0/24`). Il PC invia il pacchetto inserendo l'IP di destinazione finale (`192.168.20.5`) nell'header di Layer 3, ma incapsula il frame inserendo il **MAC address del Gateway** (`192.168.10.1`) come destinazione di Layer 2.
 4.  **8.8.8.8:** **Al Default Gateway.** L'IP appartiene a una rete remota pubblica su Internet. Il PC instrada l'operazione verso l'interfaccia interna del router aziendale.
 
 </details>
@@ -162,10 +166,10 @@ Un host aziendale della rete Amministrazione deve inviare un file a un server po
 
 | Dispositivo / Interfaccia | Indirizzo IP | Indirizzo MAC |
 | :--- | :--- | :--- |
-| **PC Client** | `192.168.1.10` | `AA:AA:AA:AA:AA:AA` |
-| **R1 LAN** (Gateway PC) | `192.168.1.1` | `BB:BB:BB:BB:BB:BB` |
-| **R1 WAN** | `172.16.1.1` | `CC:CC:CC:CC:CC:CC` |
-| **Server Target** | `172.16.1.100` | `DD:DD:DD:DD:DD:DD` |
+| **PC Client** | `192.168.1.10` | `00:AA:AA:AA:AA:AA` |
+| **R1 LAN** (Gateway PC) | `192.168.1.1` | `00:BB:BB:BB:BB:BB` |
+| **R1 WAN** | `172.16.1.1` | `00:CC:CC:CC:CC:CC` |
+| **Server Target** | `172.16.1.100` | `00:DD:DD:DD:DD:DD` |
 
 *Nota:* Il pacchetto viene originato dal PC con un valore **TTL iniziale pari a 128**.
 
@@ -186,13 +190,13 @@ La tabella correttamente compilata evidenzia un principio cardine delle reti: **
 
 | Tratto / Segmento | IP Sorgente | IP Destinazione | MAC Sorgente | MAC Destinazione | Valore TTL |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Tratto 1:** PC ➔ R1 LAN | `192.168.1.10` | `172.16.1.100` | `AA:AA:AA:AA:AA:AA` | `BB:BB:BB:BB:BB:BB` | `128` |
-| **Tratto 2:** R1 WAN ➔ Server | `192.168.1.10` | `172.16.1.100` | `CC:CC:CC:CC:CC:CC` | `DD:DD:DD:DD:DD:DD` | `127` |
+| **Tratto 1:** PC ➔ R1 LAN | `192.168.1.10` | `172.16.1.100` | `00:AA:AA:AA:AA:AA` | `00:BB:BB:BB:BB:BB` | `128` |
+| **Tratto 2:** R1 WAN ➔ Server | `192.168.1.10` | `172.16.1.100` | `00:CC:CC:CC:CC:CC` | `00:DD:DD:DD:DD:DD` | `127` |
 
 **Dettagli dell'elaborazione:**
-1.  **Nel Tratto 1**, il PC vuole parlare con una rete esterna, quindi indirizza il frame Ethernet al MAC del proprio gateway (`BB:...:BB`), mantenendo come IP finale quello del server.
+1.  **Nel Tratto 1**, il PC vuole parlare con una rete esterna, quindi indirizza il frame Ethernet al MAC del proprio gateway (`00:BB:...:BB`), mantenendo come IP finale quello del server.
 2.  **Il Router R1** riceve il frame, decapsula il Layer 2, analizza l'IP destinazione `172.16.1.100` e decrementa il TTL da 128 a 127.
-3.  **Nel Tratto 2**, il router ricapsula il pacchetto IP in un nuovo frame Ethernet. Cambia il MAC sorgente immettendo quello della propria interfaccia di uscita WAN (`CC:...:CC`) e scopre tramite ARP il MAC del Server di destinazione (`DD:...:DD`). Gli IP rimangono identici.
+3.  **Nel Tratto 2**, il router ricapsula il pacchetto IP in un nuovo frame Ethernet. Cambia il MAC sorgente immettendo quello della propria interfaccia di uscita WAN (`00:CC:...:CC`) e scopre tramite ARP il MAC del Server di destinazione (`00:DD:...:DD`). Gli IP rimangono identici.
 
 </details>
 
@@ -220,10 +224,10 @@ Rispondere ai quesiti analizzando le modifiche apportate dal router NAT durante 
 
 #### Soluzione Completa e Analisi
 
-1.  **IP Sorgente rilevato dal server esterno:** `203.0.113.100`. Il router NAT sostituisce l'indirizzo privato non instradabile su Internet con il proprio indirizzo pubblico allocato dal provider.
+1.  **IP Sorgente rilevato dal server esterno:** `203.0.113.100`. Il router NAT sostituisce l'indirizzo privato non instradabile su Internet con il proprio indirizzo pubblico allocato dal provider. Trattandosi di PAT, il router può modificare anche la **porta sorgente** e memorizza l'associazione (IP privato:porta ↔ IP pubblico:porta) nella propria tabella NAT, così da poter restituire la risposta all'host corretto.
 2.  **IP Sorgente originario:** `192.168.1.50`. Questo indirizzo è visibile solo all'interno del segmento LAN locale prima di toccare l'interfaccia interna del router.
 3.  **Modifica del TTL da parte del NAT:** **No.** Il NAT, per definizione tecnica, si occupa unicamente della traduzione degli indirizzi di livello 3 (e delle porte di livello 4). Tuttavia, poiché il dispositivo che esegue il NAT è a tutti gli effetti un **router Layer 3**, esso eseguirà *anche* l'operazione standard di routing sul pacchetto, comportando il consueto **decremento del TTL di 1 unità**. La riduzione del TTL è causata dall'azione di routing/forwarding, non dal meccanismo di traduzione NAT.
-4.  **Modifica del MAC:** **Sì.** Come visto nell'Esercizio 5, il pacchetto attraversa un confine di routing Layer 3. Il frame Ethernet originario della LAN viene rimosso dal router e ne viene generato uno completamente nuovo per il transito sulla rete WAN del provider, con nuovi indirizzi MAC sorgente e destinazione appropriati per quel collegamento specifico.
+4.  **Modifica del MAC:** **Il NAT no, il routing sì.** Come per il TTL, bisogna distinguere le due funzioni: la traduzione NAT interviene solo su indirizzi IP (Layer 3) e porte (Layer 4), mentre i MAC cambiano perché, come visto nell'Esercizio 5, il pacchetto attraversa un confine di routing Layer 3. Il frame Ethernet originario della LAN viene rimosso dal router e ne viene generato uno completamente nuovo per il transito sulla rete WAN del provider, con nuovi indirizzi MAC sorgente e destinazione appropriati per quel collegamento specifico.
 
 </details>
 
@@ -255,11 +259,13 @@ Analizzando lo stato logico della tabella di routing sopra esposta, rispondere a
 #### Soluzione Completa e Analisi
 
 1.  **Raggiungibilità di 172.16.10.100:** **Sì, il router può instradare questo traffico.** Quando arriva il pacchetto, il router esegue un match con la rotta `172.16.0.0/16`. L'indirizzo `172.16.10.100` rientra perfettamente in questo intervallo di indirizzi (i primi due ottetti corrispondono a 172.16). Il router effettuerà il forwarding inviando il traffico al Next-Hop `10.1.1.2`.
-2.  **Raggiungibilità di 8.8.8.8:** **No, il pacchetto verrà scartato.** Il router esamina la tabella e nota che `8.8.8.8` non corrisponde né alla rete `10.0.0.0/8` né alla rete `172.16.0.0/16`. Poiché non esiste una rotta di default (`0.0.0.0/0`) che funga da "ultima spiaggia", il router applica la regola del *no match* e scarta immediatamente il pacchetto (generando internamente un errore di *Destination Network Unreachable*).
-3.  **Configurazione Mancante:** Manca la configurazione di una **Rotta statico-dinamica di Default (Default Route)**. 
+2.  **Raggiungibilità di 8.8.8.8:** **No, il pacchetto verrà scartato.** Il router esamina la tabella e nota che `8.8.8.8` non corrisponde né alla rete `10.0.0.0/8` né alla rete `172.16.0.0/16`. Poiché non esiste una rotta di default (`0.0.0.0/0`) che funga da "ultima spiaggia", il router applica la regola del *no match* e scarta immediatamente il pacchetto (e invia alla sorgente un messaggio ICMP *Destination Unreachable – Network Unreachable*).
+3.  **Configurazione Mancante:** Manca la configurazione di una **rotta di default** (*Default Route*), che in questo caso si può configurare come **rotta statica**. 
     * **Identificativo di rete:** `0.0.0.0/0` con subnet mask `0.0.0.0`.
-    * In ambiente di rete (ad esempio in sintassi Cisco IOS), l'amministratore dovrebbe applicare un comando analogo al seguente per sanare il problema (ipotizzando un IP del provider IP di frontiera pari a `10.1.1.254` o interfaccia di uscita specifica):
+    * In ambiente di rete (ad esempio in sintassi Cisco IOS), l'amministratore dovrebbe applicare un comando analogo al seguente per sanare il problema (ipotizzando che il router di frontiera verso Internet abbia IP `10.1.1.254`, raggiungibile tramite la rete connessa `10.0.0.0/8`):
         `ip route 0.0.0.0 0.0.0.0 10.1.1.254`
     L'inserimento di questa riga garantisce che tutto il traffico non esplicitamente menzionato per le reti interne (`10.0.0.0/8` e `172.16.0.0/16`) venga delegato al gateway di frontiera per l'accesso a Internet.
+
+    **Approfondimento – e allora perché l'utente non raggiunge `172.16.10.100`?** L'analisi del punto 1 dimostra che *questo* router non è la causa del guasto: il ticket resta aperto. Un tecnico proseguirebbe verificando che il next-hop `10.1.1.2` sia effettivamente raggiungibile (`ping 10.1.1.2`), che i router lungo il percorso abbiano una **rotta di ritorno** verso la rete dell'utente (un errore molto frequente: il pacchetto arriva, la risposta no), che non ci siano ACL o firewall che bloccano il traffico e infine che il server sia acceso e con il servizio attivo. Il comando `traceroute` (`tracert` su Windows) aiuta a capire in quale punto del percorso i pacchetti si fermano.
 
 </details>
